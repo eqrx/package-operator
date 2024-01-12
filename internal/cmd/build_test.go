@@ -78,15 +78,11 @@ func TestPreBuildValidation(t *testing.T) {
 					Return(digest, nil)
 			}
 
-			scheme, err := NewScheme()
-			require.NoError(t, err)
-
 			build := NewBuild(
-				scheme,
 				WithDigestResolver{Resolver: mResolver},
 			)
 
-			err = build.ValidatePackage(context.Background(), tc.Package)
+			err := build.ValidatePackage(context.Background(), tc.Package)
 
 			if tc.ExpectError != "" {
 				require.ErrorContains(t, err, tc.ExpectError)
