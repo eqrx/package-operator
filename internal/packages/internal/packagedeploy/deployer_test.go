@@ -111,7 +111,7 @@ func TestPackageDeployer_Deploy(t *testing.T) {
 	rawPkg := &packagetypes.RawPackage{
 		Files: packagetypes.Files{},
 	}
-	err := l.Deploy(ctx, apiPkg, rawPkg, manifests.PackageEnvironment{})
+	err := l.Deploy(ctx, nil, apiPkg, rawPkg, manifests.PackageEnvironment{})
 	require.NoError(t, err)
 
 	packageInvalid := meta.FindStatusCondition(apiPkg.Status.Conditions, corev1alpha1.PackageInvalid)
@@ -155,7 +155,7 @@ func TestPackageDeployer_Deploy_Error(t *testing.T) {
 	rawPkg := &packagetypes.RawPackage{
 		Files: packagetypes.Files{},
 	}
-	err := l.Deploy(ctx, apiPkg, rawPkg, manifests.PackageEnvironment{})
+	err := l.Deploy(ctx, nil, apiPkg, rawPkg, manifests.PackageEnvironment{})
 	require.NoError(t, err)
 
 	packageInvalid := meta.FindStatusCondition(apiPkg.Status.Conditions, corev1alpha1.PackageInvalid)
@@ -311,7 +311,7 @@ func Test_validateConstraints(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			err := validateConstraints(test.apiPkg, test.manifest, test.env)
+			err := validateConstraints(nil, test.apiPkg, test.manifest, test.env)
 			require.NoError(t, err)
 
 			invalidCond := meta.FindStatusCondition(*test.apiPkg.GetConditions(), corev1alpha1.PackageInvalid)

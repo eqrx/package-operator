@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -112,6 +113,7 @@ func ImageWithDigest(reference string, digest string) (string, error) {
 
 func (l *PackageDeployer) Deploy(
 	ctx context.Context,
+	uncachedClient client.Client,
 	apiPkg adapters.GenericPackageAccessor,
 	rawPkg *packagetypes.RawPackage,
 	env manifests.PackageEnvironment,
@@ -123,7 +125,7 @@ func (l *PackageDeployer) Deploy(
 	}
 
 	// Check constraints
-	if err := validateConstraints(apiPkg, pkg.Manifest, env); err != nil {
+	if err := validateConstraints(uncachedClient, apiPkg, pkg.Manifest, env); err != nil {
 		setInvalidConditionBasedOnLoadError(apiPkg, err)
 		return nil
 	}
@@ -235,7 +237,16 @@ func setInvalidConditionBasedOnLoadError(pkg adapters.GenericPackageAccessor, er
 	})
 }
 
+var uniqueLock = sync.Mutex{}
+
+func validateUnique(_ client.Client) []string {
+	uniqueLock.Lock()
+	defer uniqueLock.Unlock()
+	panic("ah")
+}
+
 func validateConstraints(
+	uncachedClient client.Client,
 	apiPkg adapters.GenericPackageAccessor, manifest *manifests.PackageManifest, env manifests.PackageEnvironment,
 ) error {
 	var messages []string
@@ -275,6 +286,8 @@ func validateConstraints(
 			}
 		}
 	}
+
+	messages = append(messages, validateUnique(uncachedClient)...)
 
 	if len(messages) > 0 {
 		meta.SetStatusCondition(apiPkg.GetConditions(), metav1.Condition{

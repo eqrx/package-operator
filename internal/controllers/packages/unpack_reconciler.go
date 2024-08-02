@@ -25,6 +25,8 @@ import (
 type unpackReconciler struct {
 	*environment.Sink
 
+	uncachedClient client.Client
+
 	imagePuller         imagePuller
 	packageDeployer     packageDeployer
 	packageLoadRecorder packageLoadRecorder
@@ -40,6 +42,7 @@ type packageLoadRecorder interface {
 
 func newUnpackReconciler(
 	c client.Client,
+	uncachedClient client.Client,
 	imagePuller imagePuller,
 	packageDeployer packageDeployer,
 	packageLoadRecorder packageLoadRecorder,
@@ -52,13 +55,14 @@ func newUnpackReconciler(
 	cfg.Default()
 
 	return &unpackReconciler{
-		Sink: environment.NewSink(c),
+		environment.NewSink(c),
 
-		imagePuller:         imagePuller,
-		packageDeployer:     packageDeployer,
-		packageLoadRecorder: packageLoadRecorder,
-		backoff:             cfg.GetBackoff(),
-		packageHashModifier: packageHashModifier,
+		uncachedClient,
+		imagePuller,
+		packageDeployer,
+		packageLoadRecorder,
+		cfg.GetBackoff(),
+		packageHashModifier,
 	}
 }
 
@@ -69,6 +73,7 @@ type imagePuller interface {
 type packageDeployer interface {
 	Deploy(
 		ctx context.Context,
+		uncachedClient client.Client,
 		apiPkg adapters.GenericPackageAccessor,
 		rawPkg *packages.RawPackage,
 		env manifests.PackageEnvironment,
@@ -110,7 +115,7 @@ func (r *unpackReconciler) Reconcile(
 	}
 
 	env, err := r.GetEnvironment(ctx, pkg.ClientObject().GetNamespace())
-	if err := r.packageDeployer.Deploy(ctx, pkg, rawPkg, *env); err != nil {
+	if err := r.packageDeployer.Deploy(ctx, r.uncachedClient, pkg, rawPkg, *env); err != nil {
 		return res, fmt.Errorf("deploying package: %w", err)
 	}
 

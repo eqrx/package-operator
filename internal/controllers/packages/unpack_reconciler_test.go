@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	corev1alpha1 "package-operator.run/apis/core/v1alpha1"
 	"package-operator.run/internal/adapters"
@@ -21,10 +22,11 @@ import (
 func TestUnpackReconciler(t *testing.T) {
 	t.Parallel()
 	c := testutil.NewClient()
+	uc := testutil.NewClient()
 
 	ipm := &imagePullerMock{}
 	pd := &packageDeployerMock{}
-	ur := newUnpackReconciler(c, ipm, pd, nil, nil)
+	ur := newUnpackReconciler(c, uc, ipm, pd, nil, nil)
 
 	const image = "test123:latest"
 
@@ -62,10 +64,11 @@ func TestUnpackReconciler(t *testing.T) {
 func TestUnpackReconciler_noop(t *testing.T) {
 	t.Parallel()
 	c := testutil.NewClient()
+	uc := testutil.NewClient()
 
 	ipm := &imagePullerMock{}
 	pd := &packageDeployerMock{}
-	ur := newUnpackReconciler(c, ipm, pd, nil, nil)
+	ur := newUnpackReconciler(c, uc, ipm, pd, nil, nil)
 
 	const image = "test123:latest"
 
@@ -88,10 +91,11 @@ var errTest = errors.New("test error")
 func TestUnpackReconciler_pullBackoff(t *testing.T) {
 	t.Parallel()
 	c := testutil.NewClient()
+	uc := testutil.NewClient()
 
 	ipm := &imagePullerMock{}
 	pd := &packageDeployerMock{}
-	ur := newUnpackReconciler(c, ipm, pd, nil, nil)
+	ur := newUnpackReconciler(c, uc, ipm, pd, nil, nil)
 
 	const image = "test123:latest"
 
@@ -135,10 +139,11 @@ type packageDeployerMock struct {
 
 func (m *packageDeployerMock) Deploy(
 	ctx context.Context,
+	uncachedClient client.Client,
 	apiPkg adapters.GenericPackageAccessor,
 	rawPkg *packages.RawPackage,
 	env manifests.PackageEnvironment,
 ) error {
-	args := m.Called(ctx, apiPkg, rawPkg, env)
+	args := m.Called(ctx, uncachedClient, apiPkg, rawPkg, env)
 	return args.Error(0)
 }

@@ -291,10 +291,10 @@ func (r *DeploymentReconciler) reconcileSliceWithCollisionCount(
 
 	// Try to create slice
 	err := r.client.Create(ctx, slice.ClientObject())
-	if err == nil {
+	switch {
+	case err == nil:
 		return nil
-	}
-	if err != nil && !apimachineryerrors.IsAlreadyExists(err) {
+	case !apimachineryerrors.IsAlreadyExists(err):
 		return fmt.Errorf("creating new ObjectSlice: %w", err)
 	}
 
