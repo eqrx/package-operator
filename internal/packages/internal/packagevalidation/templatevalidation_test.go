@@ -206,11 +206,7 @@ func Test_generateStaticImages(t *testing.T) {
 
 func Test_renderTemplateFiles(t *testing.T) {
 	t.Parallel()
-	path, err := os.MkdirTemp(os.TempDir(), "pko-test-renderTemplateFiles")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(path))
-	}()
+	path := t.TempDir()
 
 	files := packagetypes.Files{
 		"test.yaml":  []byte("test: xxx\n---\ntest: yyy\n---\ntest: zzz\n"),
@@ -223,7 +219,7 @@ func Test_renderTemplateFiles(t *testing.T) {
 		"test3.yaml": nil,
 	}
 
-	err = renderTemplateFiles(path, files, filteredIndexMap)
+	err := renderTemplateFiles(path, files, filteredIndexMap)
 	require.NoError(t, err)
 
 	testContent, err := os.ReadFile(filepath.Join(path, "test.yaml"))
