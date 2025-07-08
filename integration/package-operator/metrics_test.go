@@ -65,7 +65,9 @@ func TestObjectSetMetrics_ObjectSetsGarbageCollected(t *testing.T) {
 			}
 
 			// Create object deployment
-			objectDeployment := objectDeploymentTemplate(phases, probe, "test-objectdeployment", int32(revisionHistoryLimit))
+			objectDeployment := objectDeploymentTemplate(
+				phases, probe, fmt.Sprintf("test-objectdeployment-%d", revisionHistoryLimit), int32(revisionHistoryLimit),
+			)
 			require.NoError(t, Client.Create(ctx, objectDeployment), "error creating object set")
 			require.NoError(t,
 				Waiter.WaitForCondition(ctx, objectDeployment, corev1alpha1.ObjectDeploymentAvailable, metav1.ConditionTrue))
